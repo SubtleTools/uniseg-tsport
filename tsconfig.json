@@ -5,6 +5,7 @@
     "module": "ESNext", 
     "lib": ["ESNext"],
     "moduleResolution": "bundler",
+    "baseUrl": ".",
     
     // Import/Export behavior
     "allowImportingTsExtensions": true,
@@ -51,6 +52,7 @@
     "node_modules", 
     "dist", 
     "test/reference",
-    "test/corpus/**/*.go"
+    "test/corpus/**/*.go",
+    "test/corpus/**/*.ts"
   ]
 }

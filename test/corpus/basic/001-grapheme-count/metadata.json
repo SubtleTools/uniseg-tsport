@@ -1,0 +1,7 @@
+{
+  "name": "Grapheme Cluster Count Basic",
+  "description": "Basic grapheme cluster counting functionality test",
+  "category": "basic", 
+  "tags": ["grapheme", "count", "basic"],
+  "environments": ["FORCE_COLOR=3"]
+}
