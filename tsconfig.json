@@ -1,0 +1,56 @@
+{
+  "compilerOptions": {
+    // Target and Module - Modern ES for Bun compatibility
+    "target": "ESNext",
+    "module": "ESNext", 
+    "lib": ["ESNext"],
+    "moduleResolution": "bundler",
+    
+    // Import/Export behavior
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    
+    // Declaration generation for library distribution
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    
+    // Bun-specific optimizations
+    "verbatimModuleSyntax": false, // Allow flexibility for Bun's handling
+    "isolatedModules": true, // Required for fast builds
+    
+    // Type checking strictness
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    
+    // Additional code quality checks
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noPropertyAccessFromIndexSignature": false,
+    
+    // Performance and compatibility
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src/**/*", 
+    "test/**/*"
+  ],
+  "exclude": [
+    "node_modules", 
+    "dist", 
+    "test/reference",
+    "test/corpus/**/*.go"
+  ]
+}
