@@ -1,4 +1,4 @@
-import { graphemeClusterCount } from '../../../src/index';
+import { graphemeClusterCount } from '../../../../src/index.js';
 
 function main() {
   // Basic grapheme cluster count tests
