@@ -177,7 +177,7 @@ export function firstGraphemeClusterInString(
 }
 
 /**
- * Get the first word from a string (simplified implementation)
+ * Get the first word from a string (basic Unicode word boundary implementation)
  */
 export function firstWordInString(str: string, state: SegmentationState): SegmentationResult {
   if (!str) {
@@ -191,7 +191,6 @@ export function firstWordInString(str: string, state: SegmentationState): Segmen
 
   const runes = stringToRunes(str);
   let endIndex = 0;
-  let inWord = false;
 
   for (let i = 0; i < runes.length; i++) {
     const rune = runes[i];
@@ -200,18 +199,52 @@ export function firstWordInString(str: string, state: SegmentationState): Segmen
       break;
     }
 
-    if (isWhitespace(rune)) {
-      if (inWord) {
-        // End of word
-        break;
+    // Get the character category
+    const isLetter = isAlphabetic(rune);
+    const isDigit = isNumeric(rune);
+    const isSpace = isWhitespace(rune);
+    const isPunct = isPunctuation(rune);
+
+    if (i === 0) {
+      // First character determines the type of segment
+      if (isSpace) {
+        // Whitespace segment - continue until non-whitespace
+        for (let j = i + 1; j < runes.length; j++) {
+          const currentRune = runes[j];
+          if (currentRune !== undefined && !isWhitespace(currentRune)) {
+            endIndex = j;
+            break;
+          }
+        }
+        if (endIndex === 0) endIndex = runes.length; // All whitespace
+      } else if (isPunct) {
+        // Single punctuation character
+        endIndex = i + 1;
+      } else if (isLetter || isDigit) {
+        // Check if this is a CJK character (treat individually)
+        if (isCJK(rune)) {
+          endIndex = i + 1;
+        } else {
+          // Letter/digit sequence for non-CJK
+          for (let j = i + 1; j < runes.length; j++) {
+            const nextRune = runes[j];
+            if (nextRune === undefined) break;
+            if (!isAlphabetic(nextRune) && !isNumeric(nextRune)) {
+              endIndex = j;
+              break;
+            }
+          }
+          if (endIndex === 0) endIndex = runes.length; // Rest of string is letters/digits
+        }
+      } else {
+        // Other character types (single character)
+        endIndex = i + 1;
       }
-      // Skip leading whitespace
-      endIndex = i + 1;
-    } else {
-      inWord = true;
-      endIndex = i + 1;
+      break;
     }
   }
+
+  if (endIndex === 0) endIndex = runes.length;
 
   const segment = runesToString(runes.slice(0, endIndex));
   const remainder = str.slice(segment.length);
@@ -225,7 +258,73 @@ export function firstWordInString(str: string, state: SegmentationState): Segmen
 }
 
 /**
- * Get the first sentence from a string (simplified implementation)
+ * Check if a rune is alphabetic (basic implementation)
+ */
+function isAlphabetic(rune: number): boolean {
+  // ASCII letters
+  if ((rune >= 0x41 && rune <= 0x5a) || (rune >= 0x61 && rune <= 0x7a)) {
+    return true;
+  }
+
+  // Extended Latin
+  if (rune >= 0xc0 && rune <= 0xff) {
+    return true;
+  }
+
+  // CJK Unified Ideographs
+  if (rune >= 0x4e00 && rune <= 0x9fff) {
+    return true;
+  }
+
+  // Hiragana and Katakana
+  if ((rune >= 0x3040 && rune <= 0x309f) || (rune >= 0x30a0 && rune <= 0x30ff)) {
+    return true;
+  }
+
+  // More Unicode letter ranges could be added here
+  return false;
+}
+
+/**
+ * Check if a rune is numeric (basic implementation)
+ */
+function isNumeric(rune: number): boolean {
+  // ASCII digits
+  return rune >= 0x30 && rune <= 0x39;
+}
+
+/**
+ * Check if a rune is punctuation (basic implementation)
+ */
+function isPunctuation(rune: number): boolean {
+  // ASCII punctuation
+  return (
+    (rune >= 0x21 && rune <= 0x2f) ||
+    (rune >= 0x3a && rune <= 0x40) ||
+    (rune >= 0x5b && rune <= 0x60) ||
+    (rune >= 0x7b && rune <= 0x7e)
+  );
+}
+
+/**
+ * Check if a rune is CJK (Chinese, Japanese, Korean)
+ */
+function isCJK(rune: number): boolean {
+  // CJK Unified Ideographs
+  if (rune >= 0x4e00 && rune <= 0x9fff) {
+    return true;
+  }
+
+  // Hiragana and Katakana
+  if ((rune >= 0x3040 && rune <= 0x309f) || (rune >= 0x30a0 && rune <= 0x30ff)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Get the first sentence from a string (improved implementation)
  */
 export function firstSentenceInString(str: string, state: SegmentationState): SegmentationResult {
   if (!str) {
@@ -247,20 +346,35 @@ export function firstSentenceInString(str: string, state: SegmentationState): Se
       break;
     }
 
-    // Simple sentence terminators
+    // Look for sentence terminators: . ! ?
     if (rune === 0x2e || rune === 0x21 || rune === 0x3f) {
-      // . ! ?
-      endIndex = i + 1;
+      let potentialEnd = i + 1;
 
-      // Include following whitespace
-      while (endIndex < runes.length) {
-        const nextRune = runes[endIndex];
+      // Handle multiple consecutive punctuation (... !? etc.)
+      while (potentialEnd < runes.length) {
+        const nextRune = runes[potentialEnd];
+        if (nextRune === 0x2e || nextRune === 0x21 || nextRune === 0x3f) {
+          potentialEnd++;
+        } else {
+          break;
+        }
+      }
+
+      // Skip whitespace after punctuation
+      while (potentialEnd < runes.length) {
+        const nextRune = runes[potentialEnd];
         if (nextRune === undefined || !isWhitespace(nextRune)) {
           break;
         }
-        endIndex++;
+        potentialEnd++;
       }
 
+      // Check if this is likely an abbreviation
+      if (rune === 0x2e && !isLikelySentenceEnd(runes, i)) {
+        continue; // Don't break here, keep looking
+      }
+
+      endIndex = potentialEnd;
       break;
     }
   }
@@ -274,6 +388,51 @@ export function firstSentenceInString(str: string, state: SegmentationState): Se
     segmentLength: segment.length,
     newState: state,
   };
+}
+
+/**
+ * Check if a period is likely a sentence end (not an abbreviation)
+ */
+function isLikelySentenceEnd(runes: readonly number[], dotIndex: number): boolean {
+  // Look at context before the dot
+  if (dotIndex === 0) return true;
+
+  // Get the character before the dot
+  const prevChar = runes[dotIndex - 1];
+  if (!prevChar) return true;
+
+  // If preceded by lowercase letter, likely a sentence end
+  if (prevChar >= 0x61 && prevChar <= 0x7a) {
+    // a-z
+    return true;
+  }
+
+  // If preceded by uppercase letter, check for common abbreviations
+  if (prevChar >= 0x41 && prevChar <= 0x5a) {
+    // A-Z
+    // Look at what comes after the dot
+    if (dotIndex + 1 < runes.length) {
+      const nextChar = runes[dotIndex + 1];
+      if (nextChar && isWhitespace(nextChar)) {
+        // Period followed by whitespace after uppercase - could be abbreviation
+        // Check for common patterns
+        // const beforeDot = String.fromCharCode(prevChar);
+
+        // Single letter abbreviations are common (Mr. Dr. U.S.A.)
+        if (dotIndex === 1 || (dotIndex >= 2 && runes[dotIndex - 2] === 0x2e)) {
+          return false; // Likely abbreviation
+        }
+      }
+    }
+  }
+
+  // If preceded by digit, likely decimal number
+  if (prevChar >= 0x30 && prevChar <= 0x39) {
+    // 0-9
+    return false;
+  }
+
+  return true;
 }
 
 /**

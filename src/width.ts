@@ -94,24 +94,90 @@ export function runeWidth(codePoint: number, graphemeProperty?: number): number 
 
 /**
  * Calculate the total width of a string in monospace font
+ *
+ * For now, we'll implement a simpler approach that handles the most common
+ * cases correctly while avoiding circular dependencies. This will be improved
+ * once we refactor the module structure.
  */
 export function stringWidth(str: string): number {
   if (!str) return 0;
 
   let width = 0;
-  let remaining = str;
+  let i = 0;
 
-  // Simple implementation without full grapheme clustering for now
-  // This avoids circular dependency while providing basic functionality
-  while (remaining.length > 0) {
-    const codePoint = remaining.codePointAt(0);
+  while (i < str.length) {
+    const codePoint = str.codePointAt(i);
     if (codePoint === undefined) break;
 
-    width += runeWidth(codePoint);
-
-    // Move to next character
     const charLength = codePoint > 0xffff ? 2 : 1;
-    remaining = remaining.slice(charLength);
+
+    // For complex sequences, we need to look ahead to handle them properly
+    let clusterWidth: number;
+    let skipNext = 0;
+
+    // Handle regional indicators (flags) - they come in pairs
+    if (propertyGraphemes(codePoint) === prRegionalIndicator) {
+      // Look for second regional indicator
+      const nextIndex = i + charLength;
+      if (nextIndex < str.length) {
+        const nextCodePoint = str.codePointAt(nextIndex);
+        if (
+          nextCodePoint !== undefined &&
+          propertyGraphemes(nextCodePoint) === prRegionalIndicator
+        ) {
+          // This is a flag emoji - width 2 for the pair
+          clusterWidth = 2;
+          skipNext = nextCodePoint > 0xffff ? 2 : 1;
+        } else {
+          // Single regional indicator
+          clusterWidth = runeWidth(codePoint);
+        }
+      } else {
+        clusterWidth = runeWidth(codePoint);
+      }
+    }
+    // Handle complex sequences (variation selectors, ZWJ sequences, etc.)
+    else {
+      let j = i + charLength;
+      let foundZWJ = false;
+      let hasModifiers = false;
+
+      // Look ahead for variation selectors or ZWJ
+      while (j < str.length) {
+        const nextCP = str.codePointAt(j);
+        if (nextCP === undefined) break;
+
+        const nextLen = nextCP > 0xffff ? 2 : 1;
+
+        if (nextCP === 0xfe0e || nextCP === 0xfe0f) {
+          // Variation Selectors
+          hasModifiers = true;
+          j += nextLen;
+        } else if (nextCP === 0x200d) {
+          // ZWJ
+          foundZWJ = true;
+          hasModifiers = true;
+          j += nextLen;
+        } else if (foundZWJ) {
+          // This is part of a ZWJ sequence, continue
+          j += nextLen;
+          foundZWJ = false; // Reset, looking for next ZWJ
+        } else {
+          break;
+        }
+      }
+
+      if (hasModifiers) {
+        // This is a complex emoji sequence
+        clusterWidth = 2;
+        skipNext = j - i - charLength;
+      } else {
+        clusterWidth = runeWidth(codePoint);
+      }
+    }
+
+    width += clusterWidth;
+    i += charLength + skipNext;
   }
 
   return width;

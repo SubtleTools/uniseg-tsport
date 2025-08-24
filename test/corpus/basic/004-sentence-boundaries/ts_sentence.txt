@@ -1,0 +1,26 @@
+3
+(This is sentence 1.)|(0. )|(And this is sentence two.)
+3
+(Hello! )|(How are you? )|(I'm fine.)
+5
+(Mr. )|(Smith went to the U.)|(S.)|(A. )|(yesterday.)
+6
+(What?)|(! )|(No way.)|(.)|(. )|(Really?)
+2
+(End.
+
+)|(New paragraph.)
+0
+
+1
+(No punctuation here)
+5
+(Multiple.)|(.)|(.   )|(spaces!    )|(After   punctuation.)
+3
+(E.)|(g. )|(this is an example.)
+2
+(Test (with parentheses). )|(Next sentence.)
+3
+(Question mark? )|(Answer! )|(Exclamation.)
+4
+(Dr. )|(Jones vs. )|(Dr. )|(Smith.)
