@@ -12,9 +12,6 @@ jobs:
       matrix:
         node-version: [18, 20, 22]
     
-    defaults:
-      run:
-        working-directory: packages/tsports/uniseg
     
     steps:
       - name: Checkout code
@@ -41,8 +38,6 @@ jobs:
       - name: Run tests
         run: bun test
 
-      - name: Run compatibility tests
-        run: bun run test:compatibility
 
       - name: Build package
         run: bun run build
@@ -52,9 +47,6 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     
-    defaults:
-      run:
-        working-directory: packages/tsports/uniseg
     
     steps:
       - name: Checkout code

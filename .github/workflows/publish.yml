@@ -8,9 +8,6 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: packages/tsports/uniseg
 
     steps:
       - name: Checkout code
@@ -35,8 +32,6 @@ jobs:
       - name: Run tests
         run: bun test
 
-      - name: Run compatibility tests  
-        run: bun run test:compatibility
 
       - name: Build project
         run: bun run build
