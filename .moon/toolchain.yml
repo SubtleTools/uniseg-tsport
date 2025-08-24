@@ -1,0 +1,16 @@
+$schema: "./cache/schemas/toolchain.json"
+
+typescript:
+  createMissingConfig: true
+  includeProjectReferenceSources: false
+  includeSharedTypes: true
+  routeOutDirToCache: false
+  syncProjectReferences: false
+  syncProjectReferencesToPaths: false
+
+node:
+  packageManager: "bun"
+  addEnginesConstraint: true
+  dedupeOnLockfileChange: false
+  inferTasksFromScripts: false
+  syncProjectWorkspaceDependencies: true

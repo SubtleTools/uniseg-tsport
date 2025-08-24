@@ -1,0 +1,1 @@
+[{"projects":{"uniseg":{"alias":"@tsports/uniseg","source":"."}},"configs":{".moon/toolchain.yml":"8bf36f5e54d9fe60cb92d6b479428c8bf00f9130",".moon/workspace.yml":"f2f46123f7a00cee29913cf4b8904cd56a456d8c","moon.yml":"f15e040fd6007b8f564ab56aa3f95dd06b7ae7af"},"env":{"MOON_OUTPUT_STYLE":"","MOON_RETRY_COUNT":""},"inDocker":false,"version":"1.39.4"}]

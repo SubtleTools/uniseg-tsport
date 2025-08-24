@@ -1,0 +1,15 @@
+$schema: './cache/schemas/workspace.json'
+
+versionConstraint: '>=1.22.2'
+
+projects:
+  - "."
+
+vcs:
+  manager: "git"
+  defaultBranch: "main"
+
+runner:
+  cacheLifetime: '7 days'
+  inheritColorsForPipedTasks: true
+  logRunningCommand: true
