@@ -30,7 +30,6 @@
         "useTemplate": "error"
       },
       "suspicious": {
-        "noConsole": "warn",
         "noDebugger": "error",
         "noEmptyInterface": "error"
       },
@@ -48,11 +47,6 @@
       "quoteStyle": "single",
       "semicolons": "always",
       "trailingCommas": "es5"
-    }
-  },
-  "json": {
-    "formatter": {
-      "indentWidth": 2
     }
   }
 }

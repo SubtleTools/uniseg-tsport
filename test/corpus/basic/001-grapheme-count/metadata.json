@@ -1,7 +1,9 @@
 {
-  "name": "Grapheme Cluster Count Basic",
-  "description": "Basic grapheme cluster counting functionality test",
+  "name": "Grapheme Cluster Count",
+  "description": "Tests basic grapheme cluster counting across multiple Unicode categories",
   "category": "basic",
-  "tags": ["grapheme", "count", "basic"],
-  "environments": ["FORCE_COLOR=3"]
+  "tags": ["grapheme", "basic", "unicode", "counting"],
+  "environments": [],
+  "skipReasons": [],
+  "expectedFailures": []
 }

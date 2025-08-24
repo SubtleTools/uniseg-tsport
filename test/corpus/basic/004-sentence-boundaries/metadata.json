@@ -1,0 +1,9 @@
+{
+  "name": "Sentence Boundary Detection",
+  "description": "Tests sentence boundary detection with abbreviations and complex punctuation",
+  "category": "basic",
+  "tags": ["sentence", "basic", "boundaries", "punctuation"],
+  "environments": [],
+  "skipReasons": [],
+  "expectedFailures": []
+}

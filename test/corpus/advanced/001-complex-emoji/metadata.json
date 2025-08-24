@@ -1,0 +1,9 @@
+{
+  "name": "Complex Emoji Sequences",
+  "description": "Tests complex emoji with ZWJ sequences, skin tones, and variation selectors",
+  "category": "advanced",
+  "tags": ["emoji", "advanced", "zwj", "skin-tone", "variation-selector"],
+  "environments": [],
+  "skipReasons": [],
+  "expectedFailures": []
+}

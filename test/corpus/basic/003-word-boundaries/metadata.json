@@ -1,0 +1,9 @@
+{
+  "name": "Word Boundary Detection",
+  "description": "Tests word boundary detection across multiple languages and edge cases",
+  "category": "basic",
+  "tags": ["word", "basic", "boundaries", "multilingual"],
+  "environments": [],
+  "skipReasons": [],
+  "expectedFailures": []
+}

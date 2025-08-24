@@ -1,0 +1,9 @@
+{
+  "name": "String Width Calculation",
+  "description": "Tests monospace string width calculation for various Unicode categories",
+  "category": "basic",
+  "tags": ["width", "basic", "monospace", "unicode"],
+  "environments": [],
+  "skipReasons": [],
+  "expectedFailures": []
+}

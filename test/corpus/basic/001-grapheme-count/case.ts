@@ -1,19 +1,24 @@
-import { graphemeClusterCount } from '../../../../src/index.js';
+import { graphemeClusterCount } from '#src/index.js';
 
 function main() {
-  // Basic grapheme cluster count tests
+  // Test cases covering fundamental grapheme cluster counting
   const testCases = [
-    'Hello', // Simple ASCII
-    '🇩🇪🏳️‍🌈', // Complex emoji sequences
-    'नमस्ते', // Devanagari script
-    '🧑‍💻', // Profession emoji with ZWJ
-    'a̧', // Letter with combining mark
-    '', // Empty string
+    "Hello",            // Simple ASCII
+    "🇩🇪🏳️‍🌈",          // Complex emoji sequences
+    "नमस्ते",            // Devanagari script with combining characters
+    "🧑‍💻",             // Professional emoji with ZWJ
+    "a̧",               // Letter with combining mark
+    "",                 // Empty string
+    "🏴‍☠️",             // Pirate flag (complex ZWJ sequence)
+    "👨‍👩‍👧‍👦",          // Family emoji
+    "e̊̇",               // Multiple combining marks
+    "각",               // Hangul precomposed
+    "각",            // Hangul Jamo sequence
   ];
 
-  for (const testCase of testCases) {
-    const count = graphemeClusterCount(testCase);
-    process.stdout.write(`${count}\n`);
+  for (const test of testCases) {
+    const count = graphemeClusterCount(test);
+    process.stdout.write(count + '\n');
   }
 }
 

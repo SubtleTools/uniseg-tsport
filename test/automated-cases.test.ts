@@ -1,30 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { readdirSync, readFileSync, statSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { compareOutputs, runTestCase } from './utils/comparison';
 import { applyFilter, getTestFilter, logFilterInfo } from './utils/test-filter';
 
 const FILTER = getTestFilter();
-
-// Get the correct project root - works in both source and compiled environments
-let projectRoot: string;
-if (typeof __dirname !== 'undefined') {
-  // Node.js/CommonJS environment or compiled TypeScript
-  const currentDir = __dirname;
-  // Check if we're in dist directory and adjust accordingly
-  if (currentDir.includes('/dist/')) {
-    // We're in compiled output (dist/test/), go up to package root (../../)
-    projectRoot = join(currentDir, '../../');
-  } else {
-    // We're running from source (test/), go up to package root (..)
-    projectRoot = join(currentDir, '..');
-  }
-} else {
-  // ES modules environment
-  projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-}
-
+const projectRoot = join(__dirname, '..');
 const testCasesRoot = join(projectRoot, 'test/corpus');
 
 interface TestCase {
@@ -32,7 +13,7 @@ interface TestCase {
   name: string;
   category: string;
   path: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 function discoverTestCases(): TestCase[] {

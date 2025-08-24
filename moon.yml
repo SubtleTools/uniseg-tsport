@@ -1,81 +1,84 @@
-language: 'typescript'
-type: 'library'
+language: "typescript"
+type: "library"
 
 tasks:
   build:
-    command: 'bun'
-    args: ['tsc', '--project', 'tsconfig.build.json']
+    command: "bun"
+    args: ["tsc", "--project", "tsconfig.build.json"]
     inputs:
-      - 'src/**/*'
-      - 'tsconfig.json'
-      - 'tsconfig.build.json'
+      - "src/**/*"
+      - "tsconfig.json"
+      - "tsconfig.build.json"
     outputs:
-      - 'dist/**/*'
+      - "dist/**/*"
 
   build-docs:
-    command: 'bun'
-    args: ['typedoc']
-    deps: ['build']
+    command: "bun"
+    args: ["typedoc"]
+    deps: ["build"]
     inputs:
-      - 'src/**/*'
-      - 'typedoc.json'
-      - 'README.md'
+      - "src/**/*"
+      - "typedoc.json"
+      - "README.md"
     outputs:
-      - 'docs/api/**/*'
+      - "docs/api/**/*"
 
   clean:
-    command: 'node'
-    args: ['-e', 'require("fs").rmSync("dist", {recursive: true, force: true})']
+    command: "bun"
+    args: [
+      "-e",
+      'const fs = require("fs"); if (fs.existsSync("dist")) fs.rmSync("dist", {recursive: true, force: true})',
+    ]
 
   dev:
-    command: 'bun'
-    args: ['run', '--watch', 'src/index.ts']
+    command: "bun"
+    args: ["run", "--watch", "src/index.ts"]
     local: true
 
   dev-docs:
-    command: 'bunx'
-    args: ['vitepress', 'dev', 'docs']
+    command: "bunx"
+    args: ["vitepress", "dev", "docs"]
     deps:
       - build-docs
     local: true
 
   docs:
-    command: 'bunx'
-    args: ['vitepress', 'dev', 'docs']
+    command: "bunx"
+    args: ["vitepress", "dev", "docs"]
     deps:
       - build-docs
     local: true
 
   docs-build:
-    command: 'bunx'
-    args: ['vitepress', 'build', 'docs']
+    command: "bunx"
+    args: ["vitepress", "build", "docs"]
     deps:
       - build-docs
     inputs:
-      - 'docs/api/**/*'
-      - 'docs/.vitepress/**/*'
-      - 'docs/index.md'
-      - 'docs/guide/**/*'
+      - "docs/api/**/*"
+      - "docs/.vitepress/**/*"
+      - "docs/index.md"
+      - "docs/guide/**/*"
     outputs:
-      - 'docs/.vitepress/dist/**/*'
+      - "docs/.vitepress/dist/**/*"
 
   format:
-    command: 'dprint'
-    args: ['fmt']
+    command: "dprint"
+    args: ["fmt"]
     inputs:
-      - 'src/**/*'
-      - 'test/**/*'
-      - '*.{json,md,yml,yaml}'
-      - 'biome.json'
-      - 'dprint.json'
+      - "src/**/*"
+      - "test/**/*"
+      - "*.{json,md,yml,yaml}"
+      - "biome.json"
+      - "dprint.json"
 
   lint:
-    command: 'biome'
-    args: ['check', 'src', 'test', '--no-errors-on-unmatched', '--write']
+    command: "biome"
+    args: ["check", "src", "test", "--no-errors-on-unmatched", "--write"]
     inputs:
-      - 'src/**/*'
-      - 'test/**/*'
-      - 'biome.json'
+      - "src/**/*"
+      - "test/**/*"
+      - "biome.json"
 
   prepack:
     deps:
@@ -87,25 +90,25 @@ tasks:
       - build-docs
 
   setup:
-    command: 'bun'
-    args: ['run', 'scripts/setup-reference.ts']
+    command: "bun"
+    args: ["run", "scripts/setup-reference.ts"]
     local: true
     env:
-      GO_REPO: 'https://github.com/rivo/uniseg'
+      GO_REPO: "https://github.com/rivo/uniseg"
 
   test:
-    command: 'bun'
-    args: ['test']
+    command: "bun"
+    args: ["test"]
     inputs:
-      - 'src/**/*'
-      - 'test/**/*'
+      - "src/**/*"
+      - "test/**/*"
 
   version-bump-go:
-    command: 'bun'
-    args: ['run', 'scripts/bump-go-version.ts']
+    command: "bun"
+    args: ["run", "scripts/bump-go-version.ts"]
     local: true
 
   version-bump-tsport:
-    command: 'bun'
-    args: ['run', 'scripts/bump-tsport-version.ts']
+    command: "bun"
+    args: ["run", "scripts/bump-tsport-version.ts"]
     local: true
