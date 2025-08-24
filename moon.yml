@@ -5,7 +5,6 @@ tasks:
   build:
     command: 'bun'
     args: ['tsc', '--project', 'tsconfig.build.json']
-    deps: ['clean']
     inputs:
       - 'src/**/*'
       - 'tsconfig.json'
@@ -25,8 +24,8 @@ tasks:
       - 'docs/api/**/*'
 
   clean:
-    command: 'rm'
-    args: ['-rf', 'dist']
+    command: 'node'
+    args: ['-e', 'require("fs").rmSync("dist", {recursive: true, force: true})']
 
   dev:
     command: 'bun'
