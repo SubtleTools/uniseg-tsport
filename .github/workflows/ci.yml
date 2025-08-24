@@ -14,6 +14,10 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [18, 20, 22]
 
+    defaults:
+      run:
+        working-directory: packages/tsports/uniseg
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -60,6 +64,9 @@ jobs:
 
   lint-and-format:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/tsports/uniseg
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -80,6 +87,9 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/tsports/uniseg
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -104,11 +114,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: packages/tsports/uniseg/dist/
           retention-days: 30
 
   docs:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/tsports/uniseg
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -128,5 +141,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: docs
-          path: docs/
+          path: packages/tsports/uniseg/docs/
           retention-days: 30

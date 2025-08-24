@@ -1,6 +1,13 @@
 {
   "name": "@tsports/uniseg",
-  "version": "1.0.0",
+  "version": "0.4.7-tsport",
+  "goSourceVersion": "v0.4.7",
+  "portInfo": {
+    "sourceRepo": "https://github.com/rivo/uniseg",
+    "sourceVersion": "v0.4.7",
+    "tsportVersion": 0,
+    "lastUpdated": "2024-08-24T12:00:00.000Z"
+  },
   "description": "Complete TypeScript port of rivo/uniseg with 100% API compatibility. Unicode text segmentation for grapheme clusters, word boundaries, and text width calculation.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -8,21 +15,19 @@
   "type": "module",
   "scripts": {
     "build": "moon run build",
-    "build:clean": "moon run build:clean",
-    "build:compile": "moon run build:compile",
+    "clean": "moon run clean",
     "dev": "moon run dev",
     "test": "moon run test",
-    "test:filter": "moon run test:filter",
-    "test:compatibility": "moon run test:compatibility",
-    "docs": "moon run docs",
-    "docs:build": "moon run docs:build",
-    "docs:serve": "moon run docs:serve",
     "lint": "moon run lint",
     "format": "moon run format",
     "format:check": "dprint check",
-    "prepublishOnly": "moon run prepublish",
+    "docs": "moon run docs",
+    "docs:build": "moon run docs-build",
+    "dev-docs": "moon run dev-docs",
     "prepack": "moon run prepack",
-    "setup": "moon run setup"
+    "setup": "moon run setup",
+    "version:bump-go": "moon run version-bump-go",
+    "version:bump-tsport": "moon run version-bump-tsport"
   },
   "keywords": [
     "uniseg",
@@ -93,7 +98,8 @@
     "tsconfig-moon": "^1.4.1",
     "typedoc": "^0.28.10",
     "typedoc-plugin-markdown": "^4.8.1",
-    "typedoc-theme-hierarchy": "^6.0.0",
-    "typescript": "^5.9.2"
+    "typedoc-vitepress-theme": "^1.1.2",
+    "typescript": "^5.9.2",
+    "vitepress": "^1.6.4"
   }
 }

@@ -1,9 +1,12 @@
 {
   "entryPoints": ["src/index.ts"],
-  "out": "./docs",
-  "plugin": ["typedoc-plugin-markdown", "typedoc-theme-hierarchy"],
-  "theme": "hierarchy",
-  "readme": "./README.md",
+  "out": "./docs/api",
+  "plugin": [
+    "typedoc-plugin-markdown",
+    "typedoc-vitepress-theme"
+  ],
+  "readme": "none",
+  "docsRoot": "./docs",
   "name": "@tsports/uniseg",
   "includeVersion": true,
   "excludePrivate": true,
@@ -24,7 +27,7 @@
   "sort": ["source-order"],
   "kindSortOrder": [
     "Document",
-    "Project", 
+    "Project",
     "Module",
     "Namespace",
     "Enum",
@@ -42,7 +45,6 @@
     "Accessor",
     "GetSignature",
     "SetSignature",
-    "ObjectLiteral",
     "TypeLiteral",
     "CallSignature",
     "ConstructorSignature",

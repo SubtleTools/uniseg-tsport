@@ -19,6 +19,10 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: packages/tsports/uniseg
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -47,7 +51,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: ./docs
+        path: packages/tsports/uniseg/docs
 
   deploy-docs:
     name: Deploy Documentation
