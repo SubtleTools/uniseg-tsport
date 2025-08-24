@@ -2,27 +2,36 @@
   "compilerOptions": {
     // Target and Module - Modern ES for Bun compatibility
     "target": "ESNext",
-    "module": "ESNext", 
+    "module": "ESNext",
     "lib": ["ESNext"],
     "moduleResolution": "bundler",
     "baseUrl": ".",
-    
+    "paths": {
+      "@tsports/uniseg": ["./src/index.ts"],
+      "@tsports/uniseg/go-style": ["./src/go-style.ts"],
+      "@tsports/uniseg/types": ["./src/types.ts"],
+      "#src/*": ["./src/*"],
+      "#test/*": ["./test/*"],
+      "@/*": ["./src/*"],
+      "~/test/*": ["./test/*"]
+    },
+
     // Import/Export behavior
-    "allowImportingTsExtensions": true,
+    // "allowImportingTsExtensions": true, // Disabled for emit
     "moduleDetection": "force",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowJs": true,
-    
+
     // Declaration generation for library distribution
     "declaration": true,
     "declarationMap": true,
     "outDir": "./dist",
-    
+
     // Bun-specific optimizations
     "verbatimModuleSyntax": false, // Allow flexibility for Bun's handling
     "isolatedModules": true, // Required for fast builds
-    
+
     // Type checking strictness
     "strict": true,
     "noImplicitAny": true,
@@ -33,26 +42,25 @@
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
-    
+
     // Additional code quality checks
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noPropertyAccessFromIndexSignature": false,
-    
+
     // Performance and compatibility
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
   "include": [
-    "src/**/*", 
+    "src/**/*",
     "test/**/*"
   ],
   "exclude": [
-    "node_modules", 
-    "dist", 
+    "node_modules",
+    "dist",
     "test/reference",
-    "test/corpus/**/*.go",
-    "test/corpus/**/*.ts"
+    "test/corpus/**/*.go"
   ]
 }

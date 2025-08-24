@@ -1,6 +1,6 @@
 export const getTestFilter = (): string | undefined => {
   const args = process.argv;
-  const filterIndex = args.findIndex(arg => arg === '--filter');
+  const filterIndex = args.findIndex((arg) => arg === '--filter');
   if (filterIndex !== -1 && filterIndex + 1 < args.length) {
     return args[filterIndex + 1];
   }
@@ -8,16 +8,17 @@ export const getTestFilter = (): string | undefined => {
 };
 
 export const applyFilter = <T extends { name?: string; category?: string; id?: string }>(
-  items: T[], 
+  items: T[],
   filter?: string
 ): T[] => {
   if (!filter) return items;
-  
+
   const lowerFilter = filter.toLowerCase();
-  return items.filter(item => 
-    (item.name && item.name.toLowerCase().includes(lowerFilter)) ||
-    (item.category && item.category.toLowerCase().includes(lowerFilter)) ||
-    (item.id && item.id.toLowerCase().includes(lowerFilter))
+  return items.filter(
+    (item) =>
+      (item.name && item.name.toLowerCase().includes(lowerFilter)) ||
+      (item.category && item.category.toLowerCase().includes(lowerFilter)) ||
+      (item.id && item.id.toLowerCase().includes(lowerFilter))
   );
 };
 

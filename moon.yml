@@ -1,0 +1,99 @@
+language: 'typescript'
+type: 'library'
+
+tasks:
+  build:
+    command: 'bun'
+    args: ['run', 'build:clean', '&&', 'bun', 'run', 'build:compile']
+    inputs:
+      - 'src/**/*'
+      - 'tsconfig.json'
+    outputs:
+      - 'dist/**/*'
+
+  build:clean:
+    command: 'rm'
+    args: ['-rf', 'dist']
+
+  build:compile:
+    command: 'bun'
+    args: ['tsc']
+    deps: ['build:clean']
+
+  dev:
+    command: 'bun'
+    args: ['run', '--watch', 'src/index.ts']
+    local: true
+
+  test:
+    command: 'bun'
+    args: ['test']
+    inputs:
+      - 'src/**/*'
+      - 'test/**/*'
+
+  test:filter:
+    command: 'bun'
+    args: ['test', '--filter']
+    local: true
+
+  test:compatibility:
+    command: 'bun'
+    args: ['test', 'automated-cases.test.ts']
+
+  setup:
+    command: 'bun'
+    args: ['run', 'scripts/setup-reference.ts']
+    local: true
+    env:
+      GO_REPO: 'https://github.com/rivo/uniseg'
+
+  docs:
+    command: 'bun'
+    args: ['run', 'docs:build', '&&', 'bun', 'run', 'docs:serve']
+    deps: ['build']
+    local: true
+
+  docs:build:
+    command: 'bun'
+    args: ['typedoc']
+    deps: ['build']
+    inputs:
+      - 'src/**/*'
+      - 'typedoc.json'
+      - 'README.md'
+    outputs:
+      - 'docs/**/*'
+
+  docs:serve:
+    command: 'bun'
+    args: ['serve', 'docs', '--port', '3000']
+    local: true
+
+  lint:
+    command: 'biome'
+    args: ['check', 'src', 'test', '--no-errors-on-unmatched']
+    inputs:
+      - 'src/**/*'
+      - 'test/**/*'
+      - 'biome.json'
+
+  format:
+    command: 'dprint'
+    args: ['fmt']
+    inputs:
+      - 'src/**/*'
+      - 'test/**/*'
+      - '*.{json,md,yml,yaml}'
+      - 'biome.json'
+      - 'dprint.json'
+
+  prepublish:
+    command: 'bun'
+    args: ['run', 'build', '&&', 'bun', 'test']
+    deps: ['build', 'test']
+
+  prepack:
+    command: 'bun'
+    args: ['run', 'build']
+    deps: ['build']

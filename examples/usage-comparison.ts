@@ -1,12 +1,12 @@
 /**
- * Usage examples for @subtletools/uniseg-ts
+ * Usage examples for @tsports/uniseg
  * Demonstrates both TypeScript-style and Go-style APIs
  */
 
 // TypeScript-style API (recommended)
-import { 
-  graphemeClusterCount, 
-  stringWidth, 
+import {
+  graphemeClusterCount,
+  stringWidth,
   reverseString,
   newGraphemes,
   stepString,

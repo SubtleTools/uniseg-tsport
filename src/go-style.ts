@@ -1,21 +1,21 @@
 /**
- * Go-style API wrapper for uniseg-ts
+ * Go-style API wrapper for uniseg
  * Provides API compatibility with the original Go library
- * 
+ *
  * This module wraps the TypeScript implementation to match
  * the exact Go API naming and behavior.
  */
 
 import {
+  firstGraphemeClusterInString as tsFirstGraphemeClusterInString,
+  firstLineSegmentInString as tsFirstLineSegmentInString,
+  firstSentenceInString as tsFirstSentenceInString,
+  firstWordInString as tsFirstWordInString,
   graphemeClusterCount as tsGraphemeClusterCount,
-  stringWidth as tsStringWidth,
+  newGraphemes as tsNewGraphemes,
   reverseString as tsReverseString,
   stepString as tsStepString,
-  firstGraphemeClusterInString as tsFirstGraphemeClusterInString,
-  firstWordInString as tsFirstWordInString,
-  firstSentenceInString as tsFirstSentenceInString,
-  firstLineSegmentInString as tsFirstLineSegmentInString,
-  newGraphemes as tsNewGraphemes
+  stringWidth as tsStringWidth,
 } from './core.js';
 
 import type { GraphemeIterator } from './types.js';

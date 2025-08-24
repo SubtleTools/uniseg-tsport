@@ -3,8 +3,16 @@
  * Port of github.com/rivo/uniseg
  */
 
-import type { SegmentationResult, SegmentationState, GraphemeCluster, GraphemeIterator } from './types.js';
-import { stringToRunes, runesToString, charWidth, isCombiningMark, isLineBreak, isWhitespace } from './utils.js';
+import { transitionGraphemeState } from './grapheme-rules.js';
+import { propertyGraphemes } from './properties.js';
+import type {
+  GraphemeCluster,
+  GraphemeIterator,
+  SegmentationResult,
+  SegmentationState,
+} from './types.js';
+import { isLineBreak, isWhitespace, runesToString, stringToRunes } from './utils.js';
+import { stringWidth as calculateStringWidth } from './width.js';
 
 /**
  * Initial state for segmentation algorithms
@@ -16,20 +24,20 @@ export const INITIAL_STATE: SegmentationState = -1;
  */
 export function graphemeClusterCount(str: string): number {
   if (!str) return 0;
-  
+
   let count = 0;
   let state = INITIAL_STATE;
   let remaining = str;
-  
+
   while (remaining.length > 0) {
-    const result = stepString(remaining, state);
+    const result = firstGraphemeClusterInString(remaining, state);
     if (result.segment.length === 0) break;
-    
+
     count++;
     remaining = result.remainder;
     state = result.newState;
   }
-  
+
   return count;
 }
 
@@ -37,19 +45,7 @@ export function graphemeClusterCount(str: string): number {
  * Calculate the display width of a string in a monospace font
  */
 export function stringWidth(str: string): number {
-  if (!str) return 0;
-  
-  let width = 0;
-  const runes = stringToRunes(str);
-  
-  for (const rune of runes) {
-    // Skip combining marks - they don't add width
-    if (!isCombiningMark(rune)) {
-      width += charWidth(rune);
-    }
-  }
-  
-  return width;
+  return calculateStringWidth(str);
 }
 
 /**
@@ -57,101 +53,127 @@ export function stringWidth(str: string): number {
  */
 export function reverseString(str: string): string {
   if (!str) return '';
-  
+
   const clusters: string[] = [];
   let state = INITIAL_STATE;
   let remaining = str;
-  
+
   // Extract all grapheme clusters
   while (remaining.length > 0) {
-    const result = stepString(remaining, state);
+    const result = firstGraphemeClusterInString(remaining, state);
     if (result.segment.length === 0) break;
-    
+
     clusters.push(result.segment);
     remaining = result.remainder;
     state = result.newState;
   }
-  
+
   // Reverse the array and join
   return clusters.reverse().join('');
 }
 
 /**
- * Step through a string to get the next grapheme cluster
+ * Convert code point to UTF-16 string
  */
-export function stepString(str: string, state: SegmentationState): SegmentationResult {
-  if (!str) {
-    return {
-      segment: '',
-      remainder: '',
-      segmentLength: 0,
-      newState: state
-    };
-  }
-  
-  const runes = stringToRunes(str);
-  if (runes.length === 0) {
-    return {
-      segment: '',
-      remainder: '',
-      segmentLength: 0,
-      newState: state
-    };
-  }
-  
-  // Find the end of the first grapheme cluster
-  let endIndex = 1;
-  
-  // Basic grapheme cluster boundary detection
-  // This is a simplified implementation - full implementation would need
-  // complete Unicode grapheme cluster boundary rules
-  for (let i = 1; i < runes.length; i++) {
-    const currentRune = runes[i];
-    const prevRune = runes[i - 1];
-    
-    if (currentRune === undefined || prevRune === undefined) {
-      break;
-    }
-    
-    // Don't break on combining marks
-    if (isCombiningMark(currentRune)) {
-      endIndex = i + 1;
-      continue;
-    }
-    
-    // Handle emoji sequences (simplified)
-    if (isEmojiModifier(currentRune) || isEmojiJoiner(currentRune)) {
-      endIndex = i + 1;
-      continue;
-    }
-    
-    // Handle regional indicator pairs (flag emojis)
-    if (isRegionalIndicator(prevRune) && isRegionalIndicator(currentRune)) {
-      endIndex = i + 1;
-      break;
-    }
-    
-    // Break here
-    break;
-  }
-  
-  const clusterRunes = runes.slice(0, endIndex);
-  const segment = runesToString(clusterRunes);
-  const remainder = str.slice(segment.length);
-  
-  return {
-    segment,
-    remainder,
-    segmentLength: segment.length,
-    newState: state
-  };
+/**
+ * Decode first code point from string
+ */
+function decodeCodePoint(str: string): [number, number] {
+  if (!str.length) return [0, 0];
+
+  const codePoint = str.codePointAt(0);
+  if (codePoint === undefined) return [0, 0];
+
+  // Calculate character length in UTF-16 units
+  const length = codePoint > 0xffff ? 2 : 1;
+  return [codePoint, length];
 }
 
 /**
  * Get the first grapheme cluster from a string
  */
-export function firstGraphemeClusterInString(str: string, state: SegmentationState): SegmentationResult {
-  return stepString(str, state);
+export function firstGraphemeClusterInString(
+  str: string,
+  state: SegmentationState
+): SegmentationResult {
+  if (!str) {
+    return {
+      segment: '',
+      remainder: '',
+      segmentLength: 0,
+      newState: state,
+    };
+  }
+
+  // Extract first code point
+  const [codePoint, length] = decodeCodePoint(str);
+  if (length === 0) {
+    return {
+      segment: '',
+      remainder: str,
+      segmentLength: 0,
+      newState: state,
+    };
+  }
+
+  // If this is the only character
+  if (str.length <= length) {
+    let prop: number;
+    if (state < 0) {
+      prop = propertyGraphemes(codePoint);
+    } else {
+      // Extract property from state (simplified)
+      prop = 0;
+    }
+
+    return {
+      segment: str,
+      remainder: '',
+      segmentLength: str.length,
+      newState: 0 | (prop << 21), // shiftPropState = 21
+    };
+  }
+
+  // Determine initial state and property
+  let currentState: number;
+  let firstProp: number;
+
+  if (state < 0) {
+    [currentState, firstProp] = transitionGraphemeState(state, codePoint);
+  } else {
+    // Extract from packed state (simplified)
+    currentState = state & 0xf; // maskGraphemeState
+    firstProp = state >> 21; // shiftPropState
+  }
+
+  let currentLength = length;
+
+  // Find grapheme cluster boundary
+  while (currentLength < str.length) {
+    const [nextCodePoint, nextLength] = decodeCodePoint(str.slice(currentLength));
+    const [newState, prop, boundary] = transitionGraphemeState(currentState, nextCodePoint);
+
+    if (boundary) {
+      // Found boundary
+      return {
+        segment: str.slice(0, currentLength),
+        remainder: str.slice(currentLength),
+        segmentLength: currentLength,
+        newState: newState | (prop << 21),
+      };
+    }
+
+    currentState = newState;
+    currentLength += nextLength;
+  }
+
+  // End of string
+  return {
+    segment: str,
+    remainder: '',
+    segmentLength: str.length,
+    newState: 0 | (firstProp << 21),
+  };
 }
 
 /**
@@ -163,21 +185,21 @@ export function firstWordInString(str: string, state: SegmentationState): Segmen
       segment: '',
       remainder: '',
       segmentLength: 0,
-      newState: state
+      newState: state,
     };
   }
-  
+
   const runes = stringToRunes(str);
   let endIndex = 0;
   let inWord = false;
-  
+
   for (let i = 0; i < runes.length; i++) {
     const rune = runes[i];
-    
+
     if (rune === undefined) {
       break;
     }
-    
+
     if (isWhitespace(rune)) {
       if (inWord) {
         // End of word
@@ -190,15 +212,15 @@ export function firstWordInString(str: string, state: SegmentationState): Segmen
       endIndex = i + 1;
     }
   }
-  
+
   const segment = runesToString(runes.slice(0, endIndex));
   const remainder = str.slice(segment.length);
-  
+
   return {
     segment,
     remainder,
     segmentLength: segment.length,
-    newState: state
+    newState: state,
   };
 }
 
@@ -211,24 +233,25 @@ export function firstSentenceInString(str: string, state: SegmentationState): Se
       segment: '',
       remainder: '',
       segmentLength: 0,
-      newState: state
+      newState: state,
     };
   }
-  
+
   const runes = stringToRunes(str);
   let endIndex = runes.length;
-  
+
   for (let i = 0; i < runes.length; i++) {
     const rune = runes[i];
-    
+
     if (rune === undefined) {
       break;
     }
-    
+
     // Simple sentence terminators
-    if (rune === 0x2E || rune === 0x21 || rune === 0x3F) { // . ! ?
+    if (rune === 0x2e || rune === 0x21 || rune === 0x3f) {
+      // . ! ?
       endIndex = i + 1;
-      
+
       // Include following whitespace
       while (endIndex < runes.length) {
         const nextRune = runes[endIndex];
@@ -237,59 +260,76 @@ export function firstSentenceInString(str: string, state: SegmentationState): Se
         }
         endIndex++;
       }
-      
+
       break;
     }
   }
-  
+
   const segment = runesToString(runes.slice(0, endIndex));
   const remainder = str.slice(segment.length);
-  
+
   return {
     segment,
     remainder,
     segmentLength: segment.length,
-    newState: state
+    newState: state,
   };
 }
 
 /**
  * Get the first line segment from a string (simplified implementation)
  */
-export function firstLineSegmentInString(str: string, state: SegmentationState): SegmentationResult {
+export function firstLineSegmentInString(
+  str: string,
+  state: SegmentationState
+): SegmentationResult {
   if (!str) {
     return {
       segment: '',
       remainder: '',
       segmentLength: 0,
-      newState: state
+      newState: state,
     };
   }
-  
+
   const runes = stringToRunes(str);
   let endIndex = runes.length;
-  
+
   for (let i = 0; i < runes.length; i++) {
     const rune = runes[i];
-    
+
     if (rune === undefined) {
       break;
     }
-    
+
     if (isLineBreak(rune)) {
       endIndex = i + 1;
       break;
     }
   }
-  
+
   const segment = runesToString(runes.slice(0, endIndex));
   const remainder = str.slice(segment.length);
-  
+
   return {
     segment,
     remainder,
     segmentLength: segment.length,
-    newState: state
+    newState: state,
+  };
+}
+
+/**
+ * Step through a string to get the next segment with boundary information
+ * This is a compatibility wrapper for the stepString function
+ */
+export function stepString(str: string, state: SegmentationState): SegmentationResult {
+  const result = firstGraphemeClusterInString(str, state);
+  return {
+    segment: result.segment,
+    remainder: result.remainder,
+    segmentLength: result.segmentLength,
+    newState: result.newState,
   };
 }
 
@@ -300,17 +340,18 @@ export function newGraphemes(str: string): GraphemeIterator {
   return new GraphemesImpl(str);
 }
 
-// Helper functions for emoji and regional indicator detection
-function isEmojiModifier(codePoint: number): boolean {
-  return codePoint >= 0x1F3FB && codePoint <= 0x1F3FF; // Skin tone modifiers
-}
-
-function isEmojiJoiner(codePoint: number): boolean {
-  return codePoint === 0x200D; // Zero Width Joiner
-}
-
-function isRegionalIndicator(codePoint: number): boolean {
-  return codePoint >= 0x1F1E6 && codePoint <= 0x1F1FF; // Regional indicator symbols
+/**
+ * Convert string to array of code points
+ */
+function stringToCodePoints(str: string): number[] {
+  const codePoints: number[] = [];
+  for (const char of str) {
+    const codePoint = char.codePointAt(0);
+    if (codePoint !== undefined) {
+      codePoints.push(codePoint);
+    }
+  }
+  return codePoints;
 }
 
 /**
@@ -332,7 +373,7 @@ class GraphemesImpl implements GraphemeIterator {
 
     const startPos = this.pos;
     const remaining = this.str.slice(this.pos);
-    const result = stepString(remaining, this.state);
+    const result = firstGraphemeClusterInString(remaining, this.state);
 
     if (result.segment.length === 0) {
       return null;
@@ -345,7 +386,7 @@ class GraphemesImpl implements GraphemeIterator {
       cluster: result.segment,
       startPos,
       length: result.segmentLength,
-      runes: stringToRunes(result.segment)
+      runes: stringToCodePoints(result.segment),
     };
   }
 
@@ -365,6 +406,6 @@ class GraphemesImpl implements GraphemeIterator {
     if (this.pos >= this.str.length) {
       return [];
     }
-    return stringToRunes(this.str.slice(this.pos));
+    return stringToCodePoints(this.str.slice(this.pos));
   }
 }
