@@ -1,0 +1,13 @@
+# Basic workspace configuration for uniseg standalone package
+vcs:
+  manager: git
+  defaultBranch: main
+
+runner:
+  archivableTargets: []
+  cacheLifetime: 7 days
+  inheritColorsForPipedTasks: true
+  logRunningCommand: true
+
+projects:
+  - "."
