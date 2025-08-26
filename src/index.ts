@@ -23,11 +23,17 @@
 
 // Export main API functions
 export {
+  firstGraphemeCluster,
   firstGraphemeClusterInString,
+  firstLineSegment,
   firstLineSegmentInString,
+  firstSentence,
   firstSentenceInString,
+  firstWord,
   firstWordInString,
   graphemeClusterCount,
+  hasTrailingLineBreak,
+  hasTrailingLineBreakInString,
   INITIAL_STATE,
   newGraphemes,
   reverseString,
@@ -55,32 +61,43 @@ export type {
   LineBreakRange,
   PropertyRange,
 } from './properties.js';
-
 // Export properties and constants
 export {
   prA,
   // Property constants
   prAny,
+  // Sentence break properties
+  prATerm,
+  prClose,
   prControl,
   prCR,
   prExtend,
   prExtendedPictographic,
   prF,
+  prFormat,
   prH,
   prL,
   prLF,
+  prLower,
   prLV,
   prLVT,
   // East Asian Width constants
   prN,
   prNa,
+  prNumeric,
+  prOLetter,
   propertyEastAsianWidth,
   propertyGraphemes,
   propertyLineBreak,
   prPrepend,
   prRegionalIndicator,
+  prSContinue,
+  prSep,
+  prSp,
   prSpacingMark,
+  prSTerm,
   prT,
+  prUpper,
   prV,
   prW,
   prZWJ,
@@ -88,6 +105,24 @@ export {
   vs15,
   vs16,
 } from './properties.js';
+export type { SentenceBreakPropertyRange } from './sentence-properties.js';
+// Export sentence break functionality
+export { propertySentenceBreak } from './sentence-properties.js';
+export {
+  sbAny,
+  sbATerm,
+  sbCR,
+  sbLower,
+  sbParaSep,
+  sbSB7,
+  sbSB8aClose,
+  sbSB8aSp,
+  sbSB8Close,
+  sbSB8Sp,
+  sbSTerm,
+  sbUpper,
+  transitionSentenceBreakState,
+} from './sentence-rules.js';
 export type { StepResult } from './step.js';
 // Export step functions
 export {
@@ -129,8 +164,17 @@ export {
 
 // Re-export for convenience
 import {
+  firstGraphemeCluster,
   firstGraphemeClusterInString,
+  firstLineSegment,
+  firstLineSegmentInString,
+  firstSentence,
+  firstSentenceInString,
+  firstWord,
+  firstWordInString,
   graphemeClusterCount,
+  hasTrailingLineBreak,
+  hasTrailingLineBreakInString,
   newGraphemes,
   reverseString,
   stringWidth,
@@ -145,8 +189,21 @@ export default {
   graphemeClusterCount,
   stringWidth,
   reverseString,
-  firstGraphemeClusterInString,
   newGraphemes,
+
+  // String functions
+  firstGraphemeClusterInString,
+  firstWordInString,
+  firstSentenceInString,
+  firstLineSegmentInString,
+  hasTrailingLineBreakInString,
+
+  // Byte array functions
+  firstGraphemeCluster,
+  firstWord,
+  firstSentence,
+  firstLineSegment,
+  hasTrailingLineBreak,
 
   // Step functions
   stepString,

@@ -258,7 +258,9 @@ export const graphemeCodePoints: readonly PropertyRange[] = [
   [0x000d, 0x000d, prCR],
   [0x000e, 0x001f, prControl],
   [0x007f, 0x009f, prControl],
+  [0x00a9, 0x00a9, prExtendedPictographic], // Copyright sign
   [0x00ad, 0x00ad, prControl], // Soft hyphen
+  [0x00ae, 0x00ae, prExtendedPictographic], // Registered sign
   [0x0300, 0x036f, prExtend], // Combining diacriticals
   [0x0483, 0x0489, prExtend], // Cyrillic combining marks
   [0x0591, 0x05bd, prExtend], // Hebrew accents
@@ -305,18 +307,7 @@ export const graphemeCodePoints: readonly PropertyRange[] = [
   [0x1100, 0x115f, prL], // Hangul Jamo L
   [0x1160, 0x11a7, prV], // Hangul Jamo V
   [0x11a8, 0x11ff, prT], // Hangul Jamo T
-  [0x1f1e6, 0x1f1ff, prRegionalIndicator], // Regional indicator symbols
   [0x200d, 0x200d, prZWJ], // Zero width joiner
-  [0x1f3fb, 0x1f3ff, prExtend], // Emoji skin tone modifiers
-  [0x1f600, 0x1f64f, prExtendedPictographic], // Emoticons
-  [0x1f680, 0x1f6ff, prExtendedPictographic], // Transport and map symbols
-  [0x1f700, 0x1f77f, prExtendedPictographic], // Alchemical symbols
-  [0x1f780, 0x1f7ff, prExtendedPictographic], // Geometric shapes extended
-  [0x1f800, 0x1f8ff, prExtendedPictographic], // Supplemental arrows-C
-  [0x1f900, 0x1f9ff, prExtendedPictographic], // Supplemental symbols and pictographs
-  [0x1fa70, 0x1faff, prExtendedPictographic], // Symbols and Pictographs Extended-A
-  [0x00a9, 0x00a9, prExtendedPictographic], // Copyright sign
-  [0x00ae, 0x00ae, prExtendedPictographic], // Registered sign
   [0x203c, 0x203c, prExtendedPictographic], // Double exclamation mark
   [0x2049, 0x2049, prExtendedPictographic], // Exclamation question mark
   [0x2122, 0x2122, prExtendedPictographic], // Trade mark sign
@@ -372,6 +363,45 @@ export const graphemeCodePoints: readonly PropertyRange[] = [
   [0x26f0, 0x26f5, prExtendedPictographic], // Mountain, sailboat
   [0x26f7, 0x26fa, prExtendedPictographic], // Skier to tent
   [0x26fd, 0x26fd, prExtendedPictographic], // Fuel pump
+  [0x2744, 0x2744, prExtendedPictographic], // Snowflake
+  [0x2764, 0x2764, prExtendedPictographic], // Heavy black heart
+  [0xfe0e, 0xfe0f, prExtend], // Variation Selectors 15-16
+  [0x1f1e6, 0x1f1ff, prRegionalIndicator], // Regional indicator symbols
+  [0x1f308, 0x1f308, prExtendedPictographic], // Rainbow
+  [0x1f393, 0x1f393, prExtendedPictographic], // Graduation cap
+  [0x1f3f3, 0x1f3f4, prExtendedPictographic], // White flag, Black flag
+  [0x1f3fb, 0x1f3ff, prExtend], // Emoji skin tone modifiers
+  [0x1f400, 0x1f4fd, prExtendedPictographic], // Animals and Nature, Objects
+  [0x1f4ff, 0x1f53d, prExtendedPictographic], // Objects continued
+  [0x1f549, 0x1f54e, prExtendedPictographic], // More objects
+  [0x1f550, 0x1f567, prExtendedPictographic], // Clock faces
+  [0x1f56f, 0x1f570, prExtendedPictographic], // More objects
+  [0x1f573, 0x1f57a, prExtendedPictographic], // More objects
+  [0x1f587, 0x1f587, prExtendedPictographic], // Paper clip
+  [0x1f58a, 0x1f58d, prExtendedPictographic], // Writing tools
+  [0x1f590, 0x1f590, prExtendedPictographic], // Raised hand with fingers splayed
+  [0x1f595, 0x1f596, prExtendedPictographic], // Middle finger, raised hand with part between middle and ring fingers
+  [0x1f5a4, 0x1f5a4, prExtendedPictographic], // Black heart
+  [0x1f5a5, 0x1f5a5, prExtendedPictographic], // Desktop computer
+  [0x1f5a8, 0x1f5a8, prExtendedPictographic], // Printer
+  [0x1f5b1, 0x1f5b2, prExtendedPictographic], // Computer mouse, trackball
+  [0x1f5bc, 0x1f5bc, prExtendedPictographic], // Framed picture
+  [0x1f5c2, 0x1f5c4, prExtendedPictographic], // File folders
+  [0x1f5d1, 0x1f5d3, prExtendedPictographic], // Wastebasket, spiral calendar, spiral notepad
+  [0x1f5dc, 0x1f5de, prExtendedPictographic], // Compression, old key, rolled-up newspaper
+  [0x1f5e1, 0x1f5e1, prExtendedPictographic], // Dagger
+  [0x1f5e3, 0x1f5e3, prExtendedPictographic], // Speaking head
+  [0x1f5e8, 0x1f5e8, prExtendedPictographic], // Left speech bubble
+  [0x1f5ef, 0x1f5ef, prExtendedPictographic], // Right anger bubble
+  [0x1f5f3, 0x1f5f3, prExtendedPictographic], // Ballot box with ballot
+  [0x1f5fa, 0x1f5fa, prExtendedPictographic], // World map
+  [0x1f600, 0x1f64f, prExtendedPictographic], // Emoticons
+  [0x1f680, 0x1f6ff, prExtendedPictographic], // Transport and map symbols
+  [0x1f700, 0x1f77f, prExtendedPictographic], // Alchemical symbols
+  [0x1f780, 0x1f7ff, prExtendedPictographic], // Geometric shapes extended
+  [0x1f800, 0x1f8ff, prExtendedPictographic], // Supplemental arrows-C
+  [0x1f900, 0x1f9ff, prExtendedPictographic], // Supplemental symbols and pictographs
+  [0x1fa70, 0x1faff, prExtendedPictographic], // Symbols and Pictographs Extended-A
 ];
 
 /**

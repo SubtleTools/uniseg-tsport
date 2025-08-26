@@ -5,14 +5,16 @@
 
 import { transitionGraphemeState } from './grapheme-rules.js';
 import { propertyGraphemes } from './properties.js';
+import { sbAny, transitionSentenceBreakState } from './sentence-rules.js';
 import type {
   GraphemeCluster,
   GraphemeIterator,
   SegmentationResult,
   SegmentationState,
 } from './types.js';
-import { isLineBreak, isWhitespace, runesToString, stringToRunes } from './utils.js';
+import { isLineBreak, runesToString, stringToRunes } from './utils.js';
 import { stringWidth as calculateStringWidth } from './width.js';
+import { transitionWordBreakState, wbAny } from './word-rules.js';
 
 /**
  * Initial state for segmentation algorithms
@@ -177,7 +179,7 @@ export function firstGraphemeClusterInString(
 }
 
 /**
- * Get the first word from a string (basic Unicode word boundary implementation)
+ * Get the first word from a string using Unicode word boundary rules
  */
 export function firstWordInString(str: string, state: SegmentationState): SegmentationResult {
   if (!str) {
@@ -189,142 +191,74 @@ export function firstWordInString(str: string, state: SegmentationState): Segmen
     };
   }
 
-  const runes = stringToRunes(str);
-  let endIndex = 0;
-
-  for (let i = 0; i < runes.length; i++) {
-    const rune = runes[i];
-
-    if (rune === undefined) {
-      break;
-    }
-
-    // Get the character category
-    const isLetter = isAlphabetic(rune);
-    const isDigit = isNumeric(rune);
-    const isSpace = isWhitespace(rune);
-    const isPunct = isPunctuation(rune);
-
-    if (i === 0) {
-      // First character determines the type of segment
-      if (isSpace) {
-        // Whitespace segment - continue until non-whitespace
-        for (let j = i + 1; j < runes.length; j++) {
-          const currentRune = runes[j];
-          if (currentRune !== undefined && !isWhitespace(currentRune)) {
-            endIndex = j;
-            break;
-          }
-        }
-        if (endIndex === 0) endIndex = runes.length; // All whitespace
-      } else if (isPunct) {
-        // Single punctuation character
-        endIndex = i + 1;
-      } else if (isLetter || isDigit) {
-        // Check if this is a CJK character (treat individually)
-        if (isCJK(rune)) {
-          endIndex = i + 1;
-        } else {
-          // Letter/digit sequence for non-CJK
-          for (let j = i + 1; j < runes.length; j++) {
-            const nextRune = runes[j];
-            if (nextRune === undefined) break;
-            if (!isAlphabetic(nextRune) && !isNumeric(nextRune)) {
-              endIndex = j;
-              break;
-            }
-          }
-          if (endIndex === 0) endIndex = runes.length; // Rest of string is letters/digits
-        }
-      } else {
-        // Other character types (single character)
-        endIndex = i + 1;
-      }
-      break;
-    }
+  // Extract the first rune
+  const codePoint = str.codePointAt(0);
+  if (codePoint === undefined) {
+    return {
+      segment: '',
+      remainder: str,
+      segmentLength: 0,
+      newState: state,
+    };
   }
 
-  if (endIndex === 0) endIndex = runes.length;
+  const length = codePoint > 0xffff ? 2 : 1;
 
-  const segment = runesToString(runes.slice(0, endIndex));
-  const remainder = str.slice(segment.length);
+  // If this is the only character
+  if (str.length <= length) {
+    return {
+      segment: str,
+      remainder: '',
+      segmentLength: str.length,
+      newState: wbAny,
+    };
+  }
 
+  // If we don't know the state, determine it now
+  if (state < 0) {
+    [state] = transitionWordBreakState(state, codePoint, null, str.slice(length));
+  }
+
+  // Transition until we find a boundary
+  let currentLength = length;
+  let currentState = state;
+
+  while (currentLength < str.length) {
+    const nextCP = str.codePointAt(currentLength);
+    if (nextCP === undefined) break;
+
+    const nextLength = nextCP > 0xffff ? 2 : 1;
+    const [newState, boundary] = transitionWordBreakState(
+      currentState,
+      nextCP,
+      null,
+      str.slice(currentLength + nextLength)
+    );
+
+    if (boundary) {
+      return {
+        segment: str.slice(0, currentLength),
+        remainder: str.slice(currentLength),
+        segmentLength: currentLength,
+        newState: newState,
+      };
+    }
+
+    currentState = newState;
+    currentLength += nextLength;
+  }
+
+  // End of string
   return {
-    segment,
-    remainder,
-    segmentLength: segment.length,
-    newState: state,
+    segment: str,
+    remainder: '',
+    segmentLength: str.length,
+    newState: wbAny,
   };
 }
 
 /**
- * Check if a rune is alphabetic (basic implementation)
- */
-function isAlphabetic(rune: number): boolean {
-  // ASCII letters
-  if ((rune >= 0x41 && rune <= 0x5a) || (rune >= 0x61 && rune <= 0x7a)) {
-    return true;
-  }
-
-  // Extended Latin
-  if (rune >= 0xc0 && rune <= 0xff) {
-    return true;
-  }
-
-  // CJK Unified Ideographs
-  if (rune >= 0x4e00 && rune <= 0x9fff) {
-    return true;
-  }
-
-  // Hiragana and Katakana
-  if ((rune >= 0x3040 && rune <= 0x309f) || (rune >= 0x30a0 && rune <= 0x30ff)) {
-    return true;
-  }
-
-  // More Unicode letter ranges could be added here
-  return false;
-}
-
-/**
- * Check if a rune is numeric (basic implementation)
- */
-function isNumeric(rune: number): boolean {
-  // ASCII digits
-  return rune >= 0x30 && rune <= 0x39;
-}
-
-/**
- * Check if a rune is punctuation (basic implementation)
- */
-function isPunctuation(rune: number): boolean {
-  // ASCII punctuation
-  return (
-    (rune >= 0x21 && rune <= 0x2f) ||
-    (rune >= 0x3a && rune <= 0x40) ||
-    (rune >= 0x5b && rune <= 0x60) ||
-    (rune >= 0x7b && rune <= 0x7e)
-  );
-}
-
-/**
- * Check if a rune is CJK (Chinese, Japanese, Korean)
- */
-function isCJK(rune: number): boolean {
-  // CJK Unified Ideographs
-  if (rune >= 0x4e00 && rune <= 0x9fff) {
-    return true;
-  }
-
-  // Hiragana and Katakana
-  if ((rune >= 0x3040 && rune <= 0x309f) || (rune >= 0x30a0 && rune <= 0x30ff)) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Get the first sentence from a string (improved implementation)
+ * Get the first sentence from a string using Unicode Standard Annex #29 rules
  */
 export function firstSentenceInString(str: string, state: SegmentationState): SegmentationResult {
   if (!str) {
@@ -336,103 +270,71 @@ export function firstSentenceInString(str: string, state: SegmentationState): Se
     };
   }
 
-  const runes = stringToRunes(str);
-  let endIndex = runes.length;
-
-  for (let i = 0; i < runes.length; i++) {
-    const rune = runes[i];
-
-    if (rune === undefined) {
-      break;
-    }
-
-    // Look for sentence terminators: . ! ?
-    if (rune === 0x2e || rune === 0x21 || rune === 0x3f) {
-      let potentialEnd = i + 1;
-
-      // Handle multiple consecutive punctuation (... !? etc.)
-      while (potentialEnd < runes.length) {
-        const nextRune = runes[potentialEnd];
-        if (nextRune === 0x2e || nextRune === 0x21 || nextRune === 0x3f) {
-          potentialEnd++;
-        } else {
-          break;
-        }
-      }
-
-      // Skip whitespace after punctuation
-      while (potentialEnd < runes.length) {
-        const nextRune = runes[potentialEnd];
-        if (nextRune === undefined || !isWhitespace(nextRune)) {
-          break;
-        }
-        potentialEnd++;
-      }
-
-      // Check if this is likely an abbreviation
-      if (rune === 0x2e && !isLikelySentenceEnd(runes, i)) {
-        continue; // Don't break here, keep looking
-      }
-
-      endIndex = potentialEnd;
-      break;
-    }
+  // Extract the first rune
+  const codePoint = str.codePointAt(0);
+  if (codePoint === undefined) {
+    return {
+      segment: '',
+      remainder: str,
+      segmentLength: 0,
+      newState: state,
+    };
   }
 
-  const segment = runesToString(runes.slice(0, endIndex));
-  const remainder = str.slice(segment.length);
+  const length = codePoint > 0xffff ? 2 : 1;
 
+  // If this is the only character
+  if (str.length <= length) {
+    return {
+      segment: str,
+      remainder: '',
+      segmentLength: str.length,
+      newState: sbAny,
+    };
+  }
+
+  // If we don't know the state, determine it now
+  if (state < 0) {
+    const transition = transitionSentenceBreakState(state, codePoint, str, length);
+    state = transition.newState;
+  }
+
+  // Transition until we find a boundary
+  let currentLength = length;
+  let currentState = state;
+
+  while (currentLength < str.length) {
+    const nextCP = str.codePointAt(currentLength);
+    if (nextCP === undefined) break;
+
+    const nextLength = nextCP > 0xffff ? 2 : 1;
+    const transition = transitionSentenceBreakState(
+      currentState,
+      nextCP,
+      str,
+      currentLength + nextLength
+    );
+
+    if (transition.sentenceBreak) {
+      return {
+        segment: str.slice(0, currentLength),
+        remainder: str.slice(currentLength),
+        segmentLength: currentLength,
+        newState: transition.newState,
+      };
+    }
+
+    currentState = transition.newState;
+    currentLength += nextLength;
+  }
+
+  // End of string
   return {
-    segment,
-    remainder,
-    segmentLength: segment.length,
-    newState: state,
+    segment: str,
+    remainder: '',
+    segmentLength: str.length,
+    newState: sbAny,
   };
-}
-
-/**
- * Check if a period is likely a sentence end (not an abbreviation)
- */
-function isLikelySentenceEnd(runes: readonly number[], dotIndex: number): boolean {
-  // Look at context before the dot
-  if (dotIndex === 0) return true;
-
-  // Get the character before the dot
-  const prevChar = runes[dotIndex - 1];
-  if (!prevChar) return true;
-
-  // If preceded by lowercase letter, likely a sentence end
-  if (prevChar >= 0x61 && prevChar <= 0x7a) {
-    // a-z
-    return true;
-  }
-
-  // If preceded by uppercase letter, check for common abbreviations
-  if (prevChar >= 0x41 && prevChar <= 0x5a) {
-    // A-Z
-    // Look at what comes after the dot
-    if (dotIndex + 1 < runes.length) {
-      const nextChar = runes[dotIndex + 1];
-      if (nextChar && isWhitespace(nextChar)) {
-        // Period followed by whitespace after uppercase - could be abbreviation
-        // Check for common patterns
-        // const beforeDot = String.fromCharCode(prevChar);
-
-        // Single letter abbreviations are common (Mr. Dr. U.S.A.)
-        if (dotIndex === 1 || (dotIndex >= 2 && runes[dotIndex - 2] === 0x2e)) {
-          return false; // Likely abbreviation
-        }
-      }
-    }
-  }
-
-  // If preceded by digit, likely decimal number
-  if (prevChar >= 0x30 && prevChar <= 0x39) {
-    // 0-9
-    return false;
-  }
-
-  return true;
 }
 
 /**
@@ -476,6 +378,160 @@ export function firstLineSegmentInString(
     segmentLength: segment.length,
     newState: state,
   };
+}
+
+/**
+ * Get the first grapheme cluster from a byte array
+ */
+export function firstGraphemeCluster(
+  bytes: Uint8Array,
+  state: SegmentationState
+): { cluster: Uint8Array; rest: Uint8Array; width: number; newState: SegmentationState } {
+  if (!bytes.length) {
+    return {
+      cluster: new Uint8Array(0),
+      rest: bytes,
+      width: 0,
+      newState: state,
+    };
+  }
+
+  // Convert bytes to string for processing
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const str = decoder.decode(bytes);
+
+  const result = firstGraphemeClusterInString(str, state);
+
+  // Convert back to bytes
+  const encoder = new TextEncoder();
+  const clusterBytes = encoder.encode(result.segment);
+  const restBytes = bytes.slice(clusterBytes.length);
+
+  return {
+    cluster: clusterBytes,
+    rest: restBytes,
+    width: stringWidth(result.segment),
+    newState: result.newState,
+  };
+}
+
+/**
+ * Get the first word from a byte array
+ */
+export function firstWord(
+  bytes: Uint8Array,
+  state: SegmentationState
+): { word: Uint8Array; rest: Uint8Array; newState: SegmentationState } {
+  if (!bytes.length) {
+    return {
+      word: new Uint8Array(0),
+      rest: bytes,
+      newState: state,
+    };
+  }
+
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const str = decoder.decode(bytes);
+
+  const result = firstWordInString(str, state);
+
+  const encoder = new TextEncoder();
+  const wordBytes = encoder.encode(result.segment);
+  const restBytes = bytes.slice(wordBytes.length);
+
+  return {
+    word: wordBytes,
+    rest: restBytes,
+    newState: result.newState,
+  };
+}
+
+/**
+ * Get the first sentence from a byte array
+ */
+export function firstSentence(
+  bytes: Uint8Array,
+  state: SegmentationState
+): { sentence: Uint8Array; rest: Uint8Array; newState: SegmentationState } {
+  if (!bytes.length) {
+    return {
+      sentence: new Uint8Array(0),
+      rest: bytes,
+      newState: state,
+    };
+  }
+
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const str = decoder.decode(bytes);
+
+  const result = firstSentenceInString(str, state);
+
+  const encoder = new TextEncoder();
+  const sentenceBytes = encoder.encode(result.segment);
+  const restBytes = bytes.slice(sentenceBytes.length);
+
+  return {
+    sentence: sentenceBytes,
+    rest: restBytes,
+    newState: result.newState,
+  };
+}
+
+/**
+ * Get the first line segment from a byte array
+ */
+export function firstLineSegment(
+  bytes: Uint8Array,
+  state: SegmentationState
+): { segment: Uint8Array; rest: Uint8Array; mustBreak: boolean; newState: SegmentationState } {
+  if (!bytes.length) {
+    return {
+      segment: new Uint8Array(0),
+      rest: bytes,
+      mustBreak: false,
+      newState: state,
+    };
+  }
+
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const str = decoder.decode(bytes);
+
+  const result = firstLineSegmentInString(str, state);
+
+  const encoder = new TextEncoder();
+  const segmentBytes = encoder.encode(result.segment);
+  const restBytes = bytes.slice(segmentBytes.length);
+
+  return {
+    segment: segmentBytes,
+    rest: restBytes,
+    mustBreak: isLineBreak(result.segment.codePointAt(result.segment.length - 1) || 0),
+    newState: result.newState,
+  };
+}
+
+/**
+ * Check if a byte array has a trailing line break
+ */
+export function hasTrailingLineBreak(bytes: Uint8Array): boolean {
+  if (!bytes.length) return false;
+
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const str = decoder.decode(bytes);
+
+  return hasTrailingLineBreakInString(str);
+}
+
+/**
+ * Check if a string has a trailing line break
+ */
+export function hasTrailingLineBreakInString(str: string): boolean {
+  if (!str.length) return false;
+
+  const lastCodePoint = str.codePointAt(
+    str.length - (str.charCodeAt(str.length - 1) > 0xffff ? 2 : 1)
+  );
+  return lastCodePoint !== undefined && isLineBreak(lastCodePoint);
 }
 
 /**

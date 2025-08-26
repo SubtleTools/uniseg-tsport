@@ -182,11 +182,13 @@ export function stepString(str: string, state: number): StepResult {
 
     // Update width based on emoji presentation rules
     if (firstProp === prExtendedPictographic) {
+      // For Extended Pictographic sequences, only variation selectors change the width
       if (nextCodePoint === vs15) {
         width = 1; // Text presentation
       } else if (nextCodePoint === vs16) {
         width = 2; // Emoji presentation
       }
+      // Don't accumulate width for other characters (like skin tone modifiers)
     } else if (firstProp !== prRegionalIndicator && firstProp !== prL) {
       // Add width for this character (regional indicators and Hangul L don't accumulate)
       width += runeWidth(nextCodePoint, prop);

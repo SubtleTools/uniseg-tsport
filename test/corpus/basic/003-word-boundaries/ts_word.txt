@@ -1,0 +1,24 @@
+5
+(Hello)(,)(SPACE)(world)(!)
+9
+(Test)(SPACE)(123)(.)(SPACE)(More)(SPACE)(text)(!)
+7
+(こ)(ん)(に)(ち)(は)(世)(界)
+3
+(Hello)(LF)(World)
+5
+(word)(-)(with)(-)(hyphens)
+1
+(CamelCaseWord)
+3
+(user)(@)(example.com)
+2
+(U.S.A)(.)
+0
+
+1
+(   )
+1
+(a)
+5
+(café)(SPACE)(naïve)(SPACE)(résumé)
