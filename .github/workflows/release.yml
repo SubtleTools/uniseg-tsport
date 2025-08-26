@@ -91,19 +91,25 @@ jobs:
           # TSPort versions are prereleases, so they get published correctly
           npm publish
 
+      - name: Get package info
+        id: package_info
+        run: |
+          GO_VERSION=$(node -p "require('./package.json').goSourceVersion")
+          echo "go_version=$GO_VERSION" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: |
             ## Changes in ${{ steps.version.outputs.version }}
 
             ### Version Info
             - **TSPort Version**: ${{ steps.version.outputs.version }}
-            - **Go Source Version**: ${{ fromJson(readFile('package.json')).goSourceVersion }}
+            - **Go Source Version**: ${{ steps.package_info.outputs.go_version }}
             - **Package**: @tsports/uniseg
 
             ### Installation

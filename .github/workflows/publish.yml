@@ -55,7 +55,7 @@ jobs:
       - name: Create Release Assets
         run: |
           # Create tarball with package name and version
-          tar -czf @tsports/uniseg-${{ steps.version.outputs.version }}.tar.gz \
+          tar -czf tsports-uniseg-${{ steps.version.outputs.version }}.tar.gz \
             dist/ package.json README.md LICENSE
 
       - name: Upload Release Assets
@@ -64,8 +64,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./@tsports/uniseg-${{ steps.version.outputs.version }}.tar.gz
-          asset_name: uniseg-${{ steps.version.outputs.version }}.tar.gz
+          asset_path: ./tsports-uniseg-${{ steps.version.outputs.version }}.tar.gz
+          asset_name: tsports-uniseg-${{ steps.version.outputs.version }}.tar.gz
           asset_content_type: application/gzip
 
       - name: Update Release Description

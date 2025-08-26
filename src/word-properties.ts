@@ -1938,7 +1938,11 @@ function binarySearchWordBreakProperty(codePoint: number): number {
 
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
-    const [start, end, property] = wordBreakCodePoints[mid]!;
+    const entry = wordBreakCodePoints[mid];
+    if (!entry) {
+      break;
+    }
+    const [start, end, property] = entry;
 
     if (codePoint >= start && codePoint <= end) {
       return property;
