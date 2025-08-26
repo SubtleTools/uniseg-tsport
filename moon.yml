@@ -27,7 +27,7 @@ tasks:
     command: "bun"
     args: [
       "-e",
-      'const fs = require("fs"); if (fs.existsSync("dist")) fs.rmSync("dist", {recursive: true, force: true})',
+      "const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', {recursive: true, force: true})",
     ]
 
   dev:
@@ -87,7 +87,6 @@ tasks:
       - format
       - build
       - test
-      - build-docs
 
   setup:
     command: "bun"
