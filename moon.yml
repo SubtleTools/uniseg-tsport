@@ -25,10 +25,7 @@ tasks:
 
   clean:
     command: "bun"
-    args: [
-      "-e",
-      "const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', {recursive: true, force: true})",
-    ]
+    args: ["run", "scripts/clean.js"]
 
   dev:
     command: "bun"
