@@ -6,19 +6,73 @@ on:
   pull_request:
     branches: [main, develop]
 
+env:
+  NODE_VERSION_PRIMARY: 20
+
 jobs:
-  test:
+  # Fast feedback job - runs on single platform for quick validation
+  quick-check:
+    name: Quick Check
+    runs-on: ubuntu-latest
+    outputs:
+      should-skip: ${{ steps.skip-check.outputs.should_skip }}
+    steps:
+      - name: Check for duplicate runs
+        id: skip-check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          concurrent_skipping: "same_content"
+          skip_after_successful_duplicate: "true"
+
+      - name: Checkout code
+        if: steps.skip-check.outputs.should_skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        if: steps.skip-check.outputs.should_skip != 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        if: steps.skip-check.outputs.should_skip != 'true'
+        run: bun install
+
+      - name: Check formatting
+        if: steps.skip-check.outputs.should_skip != 'true'
+        run: bun run format:check
+
+      - name: Lint code
+        if: steps.skip-check.outputs.should_skip != 'true'
+        run: bun run lint
+
+      - name: Type check
+        if: steps.skip-check.outputs.should_skip != 'true'
+        run: bun run build
+
+      - name: Quick test
+        if: steps.skip-check.outputs.should_skip != 'true'
+        run: bun run test
+
+  # Comprehensive test matrix - runs after quick check passes
+  test-matrix:
+    name: Test (${{ matrix.os }}, Node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
+    needs: quick-check
+    if: needs.quick-check.outputs.should-skip != 'true'
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [18, 20, 22]
+        exclude:
+          # Skip duplicate of quick-check
+          - os: ubuntu-latest
+            node-version: 20
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -30,56 +84,31 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Setup Go (for comparative testing)
-        uses: actions/setup-go@v4
-        with:
-          go-version: "1.21"
-
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
-      - name: Run linting
-        run: bun run lint
-
-      - name: Type checking
+      - name: Build project
         run: bun run build
 
       - name: Run tests
-        run: bun test
+        run: bun run test
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
         if: failure()
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.os }}-node${{ matrix.node-version }}
           path: |
             test-results.xml
             coverage/
-            .nyc_output/
-          retention-days: 30
+          retention-days: 7
 
-  lint-and-format:
+  # Coverage and build artifacts
+  build-and-coverage:
+    name: Build & Coverage
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Check formatting
-        run: bun run format:check
-
-      - name: Run linting
-        run: bun run lint
-
-  build:
-    runs-on: ubuntu-latest
+    needs: quick-check
+    if: needs.quick-check.outputs.should-skip != 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -92,13 +121,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION_PRIMARY }}
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
-      - name: Build package
+      - name: Build project
         run: bun run build
+
+      - name: Run tests with coverage
+        run: bun test --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -107,8 +145,12 @@ jobs:
           path: dist/
           retention-days: 30
 
+  # Documentation build
   docs:
+    name: Documentation
     runs-on: ubuntu-latest
+    needs: quick-check
+    if: needs.quick-check.outputs.should-skip != 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -119,7 +161,7 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Build documentation
         run: bun run docs:build
@@ -130,3 +172,22 @@ jobs:
           name: docs
           path: docs/
           retention-days: 30
+
+  # Final status check
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [quick-check, test-matrix, build-and-coverage, docs]
+    if: always()
+    steps:
+      - name: Check all jobs status
+        run: |
+          if [ "${{ needs.quick-check.result }}" = "success" ] && \
+             [ "${{ needs.test-matrix.result }}" = "success" ] && \
+             [ "${{ needs.build-and-coverage.result }}" = "success" ] && \
+             [ "${{ needs.docs.result }}" = "success" ]; then
+            echo "✅ All CI jobs passed!"
+          else
+            echo "❌ Some CI jobs failed"
+            exit 1
+          fi

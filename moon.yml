@@ -79,11 +79,10 @@ tasks:
 
   prepack:
     deps:
-      - clean
       - lint
       - format
-      - build
       - test
+      - build
 
   setup:
     command: "bun"

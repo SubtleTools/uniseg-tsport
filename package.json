@@ -1,6 +1,6 @@
 {
   "name": "@tsports/uniseg",
-  "version": "0.4.7-tsport",
+  "version": "0.4.7-tsport.1",
   "goSourceVersion": "v0.4.7",
   "portInfo": {
     "sourceRepo": "https://github.com/rivo/uniseg",
@@ -57,7 +57,7 @@
   },
   "homepage": "https://github.com/tsports/uniseg#readme",
   "engines": {
-    "node": "20.19.4"
+    "node": ">=16.0.0"
   },
   "files": [
     "dist",
